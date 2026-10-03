@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "purrse"
+version = "2.0.0"
+description = "A cozy offline monthly money journal"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "matplotlib>=3.8,<4",
+  "Pillow>=10,<12",
+  "PySide6>=6.8,<7",
+  "python-docx>=1.1,<2",
+  "reportlab>=4,<5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "pytest-qt>=4.4,<5", "pyinstaller>=6,<7"]
+
+[project.gui-scripts]
+purrse = "purrse.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+purrse = ["qml/*.qml", "assets/miso/*.png"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
