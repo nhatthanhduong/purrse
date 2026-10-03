@@ -56,6 +56,7 @@ ApplicationWindow {
         leftPadding: 18; rightPadding: 18
         font.pixelSize: 14
         font.weight: Font.DemiBold
+        onPressed: Controller.playSound("click")
         contentItem: Text {
             text: control.text
             color: control.textColor
@@ -154,7 +155,7 @@ ApplicationWindow {
                             Text { text: modelData.icon; color: index === window.currentPage ? "#ff98cd" : "#d9c6d7"; font.pixelSize: 21; width: 24; horizontalAlignment: Text.AlignHCenter }
                             Text { text: modelData.label; color: index === window.currentPage ? "white" : "#e5d9e3"; font.pixelSize: 14; font.weight: index === window.currentPage ? Font.DemiBold : Font.Normal }
                         }
-                        MouseArea { id: navMouse; anchors.fill: parent; hoverEnabled: true; onClicked: window.goPage(index) }
+                        MouseArea { id: navMouse; anchors.fill: parent; hoverEnabled: true; onClicked: { Controller.playSound("whoosh"); window.goPage(index) } }
                     }
                 }
                 Item { Layout.fillHeight: true }
@@ -179,6 +180,8 @@ ApplicationWindow {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         fillMode: Image.PreserveAspectFit
+                        smooth: false
+                        mipmap: false
                         source: "../assets/miso/" + window.misoState + ".png"
                         asynchronous: true
                         transform: [
@@ -249,7 +252,11 @@ ApplicationWindow {
                     ToolButton {
                         text: Controller.soundEnabled ? "🔊" : "🔇"
                         font.pixelSize: 19
-                        onClicked: Controller.saveSettings(!Controller.soundEnabled, Controller.soundVolume, Controller.reducedMotion)
+                        onClicked: {
+                            var turningOn = !Controller.soundEnabled
+                            Controller.saveSettings(turningOn, Controller.soundVolume, Controller.reducedMotion)
+                            if (turningOn) Controller.playSound("click")
+                        }
                         ToolTip.visible: hovered; ToolTip.text: Controller.soundEnabled ? "Mute sounds" : "Enable sounds"
                     }
                     ComboBox {
@@ -257,7 +264,7 @@ ApplicationWindow {
                         model: Controller.monthLabels
                         currentIndex: Controller.currentMonthIndex
                         implicitWidth: 190
-                        onActivated: Controller.currentMonthIndex = currentIndex
+                        onActivated: { Controller.playSound("click"); Controller.currentMonthIndex = currentIndex }
                     }
                 }
 
@@ -475,12 +482,14 @@ ApplicationWindow {
                             SoftCard { Layout.fillWidth: true; implicitHeight: 230
                                 ColumnLayout { anchors.fill: parent; anchors.margins: 22; spacing: 12
                                     Text { text: "Motion & sound"; color: window.ink; font.pixelSize: 20; font.weight: Font.Bold }
-                                    Switch { id: soundSwitch; text: "Miso and interface sounds"; checked: Controller.soundEnabled; onToggled: Controller.saveSettings(checked, volumeSlider.value, motionSwitch.checked) }
+                                    Switch { id: soundSwitch; text: "Miso and interface sounds"; checked: Controller.soundEnabled; onToggled: { Controller.saveSettings(checked, volumeSlider.value, motionSwitch.checked); if (checked) Controller.playSound("click") } }
                                     RowLayout { Layout.fillWidth: true
                                         Text { text: "Volume"; color: window.muted }
-                                        Slider { id: volumeSlider; Layout.fillWidth: true; from: 0; to: 0.7; value: Controller.soundVolume; onMoved: Controller.saveSettings(soundSwitch.checked, value, motionSwitch.checked) }
+                                        Slider { id: volumeSlider; Layout.fillWidth: true; from: 0; to: 0.85; value: Controller.soundVolume; onMoved: Controller.saveSettings(soundSwitch.checked, value, motionSwitch.checked) }
+                                        Text { text: Math.round(volumeSlider.value * 100) + "%"; color: window.muted; Layout.preferredWidth: 38 }
                                     }
                                     Switch { id: motionSwitch; text: "Reduce motion"; checked: Controller.reducedMotion; onToggled: Controller.saveSettings(soundSwitch.checked, volumeSlider.value, checked) }
+                                    PillButton { text: "Test sounds ♪"; buttonColor: "#eee2f4"; textColor: window.purple; onClicked: Controller.playSound("celebrate") }
                                 }
                             }
                             SoftCard { Layout.fillWidth: true; implicitHeight: 210
@@ -544,7 +553,7 @@ ApplicationWindow {
         id: setupDialog; anchors.centerIn: parent; width: 510; modal: true; closePolicy: Popup.NoAutoClose; title: "Welcome to Purrse"
         visible: Controller.needsSetup
         ColumnLayout { width: parent.width; spacing: 12
-            Image { Layout.alignment: Qt.AlignHCenter; source: "../assets/miso/wave.png"; Layout.preferredWidth: 150; Layout.preferredHeight: 145; fillMode: Image.PreserveAspectFit }
+            Image { Layout.alignment: Qt.AlignHCenter; source: "../assets/miso/wave.png"; Layout.preferredWidth: 150; Layout.preferredHeight: 145; fillMode: Image.PreserveAspectFit; smooth: false; mipmap: false }
             Text { text: "Meet Miso! Amounts are entered in thousand VND."; color: window.ink; Layout.alignment: Qt.AlignHCenter }
             TextField { id: setupBank; Layout.fillWidth: true; placeholderText: "Current bank balance (k VND)"; text: "0" }
             TextField { id: setupDebt; Layout.fillWidth: true; placeholderText: "Current debt (k VND)"; text: "0" }

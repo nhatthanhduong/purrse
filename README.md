@@ -12,8 +12,8 @@ All everyday amount fields use **thousand VND**. Entering `150` records exactly 
 - Preset and custom categories, search, notes and multiple attachments per entry
 - Independent monthly image gallery for balance screenshots and other evidence
 - Smooth transitions, animated totals, progress effects, confetti and reduced-motion support
-- Persistent interactive Miso with eight illustrated poses and contextual reactions
-- Soft interface sounds with mute and volume controls
+- Persistent interactive pixel-art Miso with eight poses and contextual reactions
+- Bundled click, pop, page, celebration and Miso meow sounds with mute, volume and test controls
 - DOCX/PDF reports with charts, a curated monthly gallery and embedded receipts
 - Validated ZIP backups with automatic safety backup before restore
 
@@ -50,7 +50,7 @@ Savings is defined as income minus ordinary expenses. Borrowing and repayment af
 1. On 64-bit Windows, run `powershell -ExecutionPolicy Bypass -File scripts\build_windows.ps1`.
 2. Install [Inno Setup](https://jrsoftware.org/isinfo.php).
 3. Compile `installer\Purrse.iss`.
-4. Find the installer under `release\Purrse-Setup-2.0.0.exe`.
+4. Find the installer under `release\Purrse-Setup-2.0.2.exe`.
 
 The PyInstaller build deliberately uses a one-folder bundle wrapped by a normal installer. This launches faster and is typically less likely to trigger false antivirus warnings than a self-extracting single-file executable.
 

@@ -23,3 +23,13 @@ def test_qml_shell_loads(qapp, tmp_path):
     assert engine.rootObjects()
     assert controller.summary["targetText"] == "100k"
     engine.deleteLater()
+
+
+def test_old_quiet_default_is_migrated(qapp, tmp_path):
+    db = Database(tmp_path / "purrse.db", tmp_path / "attachments")
+    db.set_setting("sound_enabled", "0")
+    db.set_setting("sound_volume", "0.22")
+    db.set_setting("sound_asset_version", "1")
+    controller = AppController(db, tmp_path)
+    assert controller.soundVolume == 0.38
+    assert db.setting("sound_asset_version") == "2"

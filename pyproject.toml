@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "purrse"
-version = "2.0.0"
+version = "2.0.2"
 description = "A cozy offline monthly money journal"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,7 +26,7 @@ purrse = "purrse.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-purrse = ["qml/*.qml", "assets/miso/*.png"]
+purrse = ["qml/*.qml", "assets/miso/*.png", "assets/sounds/*.wav"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

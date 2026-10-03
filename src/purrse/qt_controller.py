@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 import calendar
-import math
 import os
-import struct
 import subprocess
 import sys
-import wave
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 from pathlib import Path
@@ -112,6 +109,7 @@ class SoundManager(QObject):
         self.enabled = True
         self.volume = 0.22
         self.effects: dict[str, Any] = {}
+        self.pending: set[str] = set()
         self.initialized = False
 
     def _initialize(self) -> None:
@@ -120,40 +118,35 @@ class SoundManager(QObject):
         self.initialized = True
         try:
             from PySide6.QtMultimedia import QSoundEffect
-            sound_dir = self.data_dir / "sounds"
-            sound_dir.mkdir(parents=True, exist_ok=True)
-            specs = {"pop": (0.16, (620, 980)), "celebrate": (0.55, (523, 659, 784, 1047)), "purr": (0.42, (90, 115))}
-            for name, (duration, tones) in specs.items():
+            sound_dir = Path(__file__).resolve().parent / "assets" / "sounds"
+            for name in ("click", "pop", "whoosh", "celebrate", "meow"):
                 path = sound_dir / f"{name}.wav"
                 if not path.exists():
-                    self._write_tone(path, duration, tones)
+                    continue
                 effect = QSoundEffect(self)
                 effect.setSource(QUrl.fromLocalFile(str(path)))
                 effect.setVolume(self.volume)
+                effect.loadedChanged.connect(lambda sound_name=name: self._play_when_loaded(sound_name))
                 self.effects[name] = effect
         except Exception:
             self.effects = {}
 
-    @staticmethod
-    def _write_tone(path: Path, duration: float, tones: tuple[int, ...]) -> None:
-        rate = 22050
-        frames = bytearray()
-        total = int(rate * duration)
-        segment = max(1, total // len(tones))
-        for index in range(total):
-            frequency = tones[min(len(tones) - 1, index // segment)]
-            envelope = min(1.0, index / 500) * min(1.0, (total - index) / 900)
-            sample = int(9000 * envelope * math.sin(2 * math.pi * frequency * index / rate))
-            frames.extend(struct.pack("<h", sample))
-        with wave.open(str(path), "wb") as output:
-            output.setnchannels(1); output.setsampwidth(2); output.setframerate(rate); output.writeframes(frames)
+    def _play_when_loaded(self, name: str) -> None:
+        effect = self.effects.get(name)
+        if effect and name in self.pending and effect.isLoaded() and self.enabled:
+            self.pending.discard(name)
+            effect.play()
 
     def play(self, name: str) -> None:
         if self.enabled:
             self._initialize()
         if self.enabled and name in self.effects:
-            self.effects[name].stop()
-            self.effects[name].play()
+            effect = self.effects[name]
+            if effect.isLoaded():
+                effect.stop()
+                effect.play()
+            else:
+                self.pending.add(name)
 
     def configure(self, enabled: bool, volume: float) -> None:
         self.enabled, self.volume = enabled, max(0.0, min(1.0, volume))
@@ -184,7 +177,12 @@ class AppController(QObject):
         self._busy = False
         self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="purrse")
         self._sound_enabled = db.setting("sound_enabled", "1") == "1"
-        self._volume = float(db.setting("sound_volume", "0.22") or 0.22)
+        self._volume = float(db.setting("sound_volume", "0.38") or 0.38)
+        if db.setting("sound_asset_version", "1") != "2":
+            if self._volume <= 0.22:
+                self._volume = 0.38
+                db.set_setting("sound_volume", str(self._volume))
+            db.set_setting("sound_asset_version", "2")
         self._reduced_motion = db.setting("reduced_motion", "0") == "1"
         self.sounds = SoundManager(data_dir)
         self.sounds.configure(self._sound_enabled, self._volume)
@@ -345,7 +343,7 @@ class AppController(QObject):
     @Slot(str)
     def saveNote(self, note: str) -> None:
         try:
-            self.db.save_note(self.current_month_id(), note); self.refresh(); self._react("comfort", "Reflection tucked safely into this month.", "purr")
+            self.db.save_note(self.current_month_id(), note); self.refresh(); self._react("comfort", "Reflection tucked safely into this month.", "meow")
         except ValueError as exc:
             self.notice.emit("Could not save reflection", str(exc))
 
@@ -438,7 +436,12 @@ class AppController(QObject):
 
     @Slot()
     def petMiso(self) -> None:
-        self._react("comfort", "Purrr… that was lovely!", "purr")
+        self._react("comfort", "Meow! That was lovely!", "meow")
+
+    @Slot(str)
+    def playSound(self, name: str) -> None:
+        if name in {"click", "pop", "whoosh", "celebrate", "meow"}:
+            self.sounds.play(name)
 
     @Slot()
     def openDataFolder(self) -> None:
